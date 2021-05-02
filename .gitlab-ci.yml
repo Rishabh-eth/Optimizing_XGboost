@@ -1,0 +1,27 @@
+# can use verions as well, like gcc:5.2
+# see https://hub.docker.com/_/gcc/
+image: gcc
+before_script:
+ - apt-get update --yes
+ - apt-get install --yes cmake
+ - apt-get install --yes python-pip
+ - pip install junit2html
+
+test:
+  stage: test
+  # instead of calling g++ directly you can also use some build toolkit like make
+  # install the necessary build tools when needed
+  # before_script:
+  #   - apt update && apt -y install make autoconf
+  script:
+    - cd XGBoost
+    - mkdir cicd-build && cd cicd-build
+    - cmake .. -DCMAKE_BUILD_TYPE=Debug
+    - cmake --build . --target XGBoost
+    - cmake --build . --target test
+    - cmake --build . --target bench
+    - ./test -r junit > ./report.xml
+    - junit2html --summary-matrix ./report.xml
+  artifacts:
+    reports:
+      junit: XGBoost/cicd-build/report.xml
